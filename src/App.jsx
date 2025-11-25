@@ -1,11 +1,16 @@
 import { LoginForm } from "./components/login-form";
 import RegisterForm from "./components/register-form";
+import Dashboard from "./pages/dashboard";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 
 function App() {
   return (
     <BrowserRouter>
       <Routes>
+        <Route
+          path="/"
+          element={<Dashboard />}
+        />
         <Route
           path="/login"
           element={

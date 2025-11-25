@@ -44,6 +44,9 @@ export function RegisterForm({ className, ...props }) {
     }
     localStorage.setItem("token", res.data.token);
     console.log("Registered successfully!");
+    setError("Registered Successfully ,Now please login");
+    setTimeout(() => setError(""), 10000);
+    return;
   } catch (err) {
     console.log(err);
     setError(err.response?.data?.msg || "Something went wrong!");
