@@ -1,7 +1,12 @@
-import Dashboard from "./pages/dashboard"
+import { LoginForm } from "./components/login-form"
+import { Router } from "react-router-dom"
 function App() {
   return(
-    <Dashboard />
+    <>
+      <div className="w-96 max-w-sm">
+        <LoginForm/>
+      </div>
+    </>
   )
 }
 
