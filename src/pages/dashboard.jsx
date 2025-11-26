@@ -43,35 +43,28 @@ function TaskItem({ title, desc, due, priority }) {
 }
 
 export default function Dashboard() {
-  const sampleTasks = [
+  const notLoggedTask = [
     {
-      title: "Write project spec",
-      desc: "Draft the initial spec for the app.",
-      due: "Nov 30",
+      title: "Login sir",
+      desc: "login button is on upper right.",
+      due: "Login Right away",
       priority: "High",
-    },
-    {
-      title: "Set up DB",
-      desc: "Create tables and seed data.",
-      due: "Dec 3",
-      priority: "Medium",
-    },
-    {
-      title: "Design auth",
-      desc: "Finalize login/register screens.",
-      due: "Dec 1",
-      priority: "Low",
     },
   ];
 
-  const importantTasks = [
+  const notLoggedImportantTasks = [
     {
-      title: "Pay invoices",
-      desc: "Send invoices to clients.",
-      due: "Nov 28",
+      title: "Gotta Login Sir/Mam",
+      desc: "The login button is on upper right.",
+      due: "Login right now",
       priority: "Urgent",
     },
   ];
+  const removeToken=()=>{
+    localStorage.removeItem("token")
+    setLogin(false)
+    console.log("Removed succesfully")
+  }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   const [login, setLogin] = useState(false);
   useEffect(() => {
@@ -96,11 +89,14 @@ export default function Dashboard() {
         </div>
         <div className="flex items-center gap-3">
           {/* Replace with auth-aware UI: show user when logged in, otherwise show Login */}
-          <div className="text-sm text-gray-600">Not logged in</div>
-          <Button size="sm" variant="ghost"><Link to='/login'>
+          <div className="text-sm text-gray-600">{login?"Logged in":"Log in"}</div>
+          {!login && <Button size="sm" variant="ghost"><Link to="/login">
             Login
             </Link>
-          </Button>
+          </Button>}
+          {login && <Button size="sm" variant="ghost" onClick={removeToken}>
+            Logout
+          </Button>}
         </div>
       </header>
 
@@ -121,7 +117,7 @@ export default function Dashboard() {
             </CardHeader>
             <CardContent>
               <div className="space-y-3">
-                {sampleTasks.map((t, i) => (
+                {notLoggedTask.map((t, i) => (
                   <TaskItem
                     key={i}
                     title={t.title}
@@ -145,7 +141,7 @@ export default function Dashboard() {
             </CardHeader>
             <CardContent>
               <div className="space-y-3">
-                {importantTasks.map((t, i) => (
+                {notLoggedImportantTasks.map((t, i) => (
                   <div key={i} className="bg-white p-3 rounded-lg shadow-sm">
                     <div className="flex items-center justify-between">
                       <div className="font-medium">{t.title}</div>
