@@ -8,6 +8,10 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Link } from "react-router-dom";
+import api from "@/utils/axiosInstance";
+
+// ─────────────────────────────────────────────
+
 function StatCard({ title, value }) {
   return (
     <div className="bg-white shadow rounded-lg p-4">
@@ -42,7 +46,17 @@ function TaskItem({ title, desc, due, priority }) {
   );
 }
 
+// ─────────────────────────────────────────────
+
 export default function Dashboard() {
+  const [login, setLogin] = useState(() => {
+    try {
+      return localStorage.getItem("token") !== null;
+    } catch {
+      return false;
+    }
+  });
+
   const notLoggedTask = [
     {
       title: "Login sir",
@@ -60,23 +74,30 @@ export default function Dashboard() {
       priority: "Urgent",
     },
   ];
-  const removeToken=()=>{
-    localStorage.removeItem("token")
-    setLogin(false)
-    console.log("Removed succesfully")
-  }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  const [login, setLogin] = useState(false);
+
+  // Logout
+  const removeToken = () => {
+    localStorage.removeItem("token");
+    setLogin(false);
+    console.log("Removed successfully");
+  };
+
+  // Fetch tasks when loaded
   useEffect(() => {
-    try {
-      const token = localStorage.getItem("token");
-      setLogin(token !== null);
-    } catch (err) {
-      console.error("Could not access localStorage", err);
-      setLogin(false);
-    }
+    const fetchTodos = async () => {
+      try {
+        const res = await api.get("/todo/getall");
+        const todoData=res.data.todos
+        console.log(todoData)
+      } catch (err) {
+        console.error("Error fetching todos", err);
+      }
+    };
+
+    fetchTodos();
   }, []);
-  console.log(login)
+
+  // ─────────────────────────────────────────────
 
   return (
     <div className="min-h-screen bg-gray-50 p-6">
@@ -87,16 +108,23 @@ export default function Dashboard() {
             Your personal todo dashboard
           </div>
         </div>
+
         <div className="flex items-center gap-3">
-          {/* Replace with auth-aware UI: show user when logged in, otherwise show Login */}
-          <div className="text-sm text-gray-600">{login?"Logged in":"Log in"}</div>
-          {!login && <Button size="sm" variant="ghost"><Link to="/login">
-            Login
-            </Link>
-          </Button>}
-          {login && <Button size="sm" variant="ghost" onClick={removeToken}>
-            Logout
-          </Button>}
+          <div className="text-sm text-gray-600">
+            {login ? "Logged in" : "Log in"}
+          </div>
+
+          {!login && (
+            <Button size="sm" variant="ghost">
+              <Link to="/login">Login</Link>
+            </Button>
+          )}
+
+          {login && (
+            <Button size="sm" variant="ghost" onClick={removeToken}>
+              Logout
+            </Button>
+          )}
         </div>
       </header>
 
@@ -117,15 +145,16 @@ export default function Dashboard() {
             </CardHeader>
             <CardContent>
               <div className="space-y-3">
-                {notLoggedTask.map((t, i) => (
-                  <TaskItem
-                    key={i}
-                    title={t.title}
-                    desc={t.desc}
-                    due={t.due}
-                    priority={t.priority}
-                  />
-                ))}
+                {!login &&
+                  notLoggedTask.map((t, i) => (
+                    <TaskItem
+                      key={i}
+                      title={t.title}
+                      desc={t.desc}
+                      due={t.due}
+                      priority={t.priority}
+                    />
+                  ))}
               </div>
             </CardContent>
           </Card>
