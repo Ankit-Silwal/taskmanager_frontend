@@ -153,8 +153,8 @@ export default function Dashboard() {
                     />
                   ))}
 
-                {login && 
-                  todos.map((t) => (
+                {login &&
+                  (Array.isArray(todos) ? todos : []).map((t) => (
                     <TaskItem
                       key={t._id}
                       title={t.title}

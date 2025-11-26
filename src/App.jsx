@@ -33,7 +33,7 @@ function App() {
           }
         />
         <Route path="/dashboard" element={<Dashboard />} />
-        <Route path='/createtask' element={<CreateTask />} />
+        <Route path="/createtask" element={<CreateTask />} />
       </Routes>
     </BrowserRouter>
   );
