@@ -11,7 +11,7 @@ import { Link } from "react-router-dom";
 import api from "@/utils/axiosInstance";
 
 // ─────────────────────────────────────────────
-
+// Components
 function StatCard({ title, value }) {
   return (
     <div className="bg-white shadow rounded-lg p-4">
@@ -35,20 +35,18 @@ function TaskItem({ title, desc, due, priority }) {
         <div className="text-xs text-gray-400 mt-2">Due: {due}</div>
       </div>
       <div className="flex flex-col gap-2">
-        <Button variant="ghost" size="sm">
-          Edit
-        </Button>
-        <Button variant="outline" size="sm">
-          Done
-        </Button>
+        <Button variant="ghost" size="sm">Edit</Button>
+        <Button variant="outline" size="sm">Done</Button>
       </div>
     </div>
   );
 }
 
 // ─────────────────────────────────────────────
-
+// Main Component
 export default function Dashboard() {
+
+  // Login state
   const [login, setLogin] = useState(() => {
     try {
       return localStorage.getItem("token") !== null;
@@ -56,6 +54,8 @@ export default function Dashboard() {
       return false;
     }
   });
+
+  const [todos, setTodos] = useState([]);
 
   const notLoggedTask = [
     {
@@ -82,13 +82,12 @@ export default function Dashboard() {
     console.log("Removed successfully");
   };
 
-  // Fetch tasks when loaded
   useEffect(() => {
     const fetchTodos = async () => {
       try {
         const res = await api.get("/todo/getall");
-        const todoData=res.data.todos
-        console.log(todoData)
+        setTodos(res.data.todos);  
+        
       } catch (err) {
         console.error("Error fetching todos", err);
       }
@@ -98,15 +97,12 @@ export default function Dashboard() {
   }, []);
 
   // ─────────────────────────────────────────────
-
   return (
     <div className="min-h-screen bg-gray-50 p-6">
       <header className="max-w-7xl mx-auto flex items-center justify-between py-4">
         <div className="flex items-center gap-3">
           <div className="text-2xl font-bold">TaskManager</div>
-          <div className="text-sm text-gray-500">
-            Your personal todo dashboard
-          </div>
+          <div className="text-sm text-gray-500">Your personal todo dashboard</div>
         </div>
 
         <div className="flex items-center gap-3">
@@ -139,12 +135,12 @@ export default function Dashboard() {
           <Card>
             <CardHeader>
               <CardTitle>Tasks</CardTitle>
-              <CardDescription>
-                All your tasks are listed below. Replace with dynamic data.
-              </CardDescription>
+              <CardDescription>All your tasks are listed below.</CardDescription>
             </CardHeader>
+
             <CardContent>
               <div className="space-y-3">
+
                 {!login &&
                   notLoggedTask.map((t, i) => (
                     <TaskItem
@@ -155,6 +151,19 @@ export default function Dashboard() {
                       priority={t.priority}
                     />
                   ))}
+
+                {login && 
+                  todos.map((t) => (
+                    <TaskItem
+                      key={t._id}
+                      title={t.title}
+                      desc={t.description}
+                      due={t.dueDate || "No due date"}
+                      priority={t.emergency ? "Urgent" : "Normal"}
+                    />
+                  ))
+                }
+
               </div>
             </CardContent>
           </Card>
@@ -164,10 +173,9 @@ export default function Dashboard() {
           <Card>
             <CardHeader>
               <CardTitle>Important Tasks</CardTitle>
-              <CardDescription>
-                Quick access to high-priority items.
-              </CardDescription>
+              <CardDescription>Quick access to high-priority items.</CardDescription>
             </CardHeader>
+
             <CardContent>
               <div className="space-y-3">
                 {notLoggedImportantTasks.map((t, i) => (
@@ -177,9 +185,7 @@ export default function Dashboard() {
                       <div className="text-xs text-red-600">{t.priority}</div>
                     </div>
                     <div className="text-sm text-gray-600 mt-1">{t.desc}</div>
-                    <div className="text-xs text-gray-400 mt-2">
-                      Due: {t.due}
-                    </div>
+                    <div className="text-xs text-gray-400 mt-2">Due: {t.due}</div>
                   </div>
                 ))}
               </div>
@@ -187,9 +193,7 @@ export default function Dashboard() {
           </Card>
 
           <Card>
-            <CardHeader>
-              <CardTitle>Quick Actions</CardTitle>
-            </CardHeader>
+            <CardHeader><CardTitle>Quick Actions</CardTitle></CardHeader>
             <CardContent>
               <div className="flex flex-col gap-2">
                 <Button>Create Task</Button>
@@ -198,6 +202,7 @@ export default function Dashboard() {
               </div>
             </CardContent>
           </Card>
+
         </aside>
       </main>
     </div>
