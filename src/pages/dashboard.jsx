@@ -21,6 +21,7 @@ function StatCard({ title, value }) {
   );
 }
 
+
 function TaskItem({ title, desc, due, priority }) {
   return (
     <div className="flex items-start gap-4 bg-white p-4 rounded-lg shadow-sm">
@@ -196,7 +197,7 @@ export default function Dashboard() {
             <CardHeader><CardTitle>Quick Actions</CardTitle></CardHeader>
             <CardContent>
               <div className="flex flex-col gap-2">
-                <Button>Create Task</Button>
+                <Button><Link to="/createtask">Create Task</Link></Button>
                 <Button variant="outline">View Calendar</Button>
                 <Button variant="ghost">Settings</Button>
               </div>
