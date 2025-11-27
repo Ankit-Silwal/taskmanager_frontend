@@ -1,6 +1,6 @@
 import { LoginForm } from "./components/login-form";
 import RegisterForm from "./components/register-form";
-import Dashboard from "./pages/dashboard";
+import Dashboard from "./pages/dashboard/dashboard";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { CreateTask } from "./pages/createtask";
 
