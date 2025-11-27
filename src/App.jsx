@@ -2,7 +2,6 @@ import { LoginForm } from "./components/login-form";
 import RegisterForm from "./components/register-form";
 import Dashboard from "./pages/dashboard/dashboard";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
-import { CreateTask } from "./pages/createtask";
 
 function App() {
   return (
@@ -33,7 +32,6 @@ function App() {
           }
         />
         <Route path="/dashboard" element={<Dashboard />} />
-        <Route path="/createtask" element={<CreateTask />} />
       </Routes>
     </BrowserRouter>
   );

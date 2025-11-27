@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { StatCard } from "./startcard";
+import Header from "./components/Header";
+import Stats from "./components/Stats";
+import TaskList from "./components/TaskList";
 import {
   Card,
   CardContent,
@@ -10,9 +12,18 @@ import {
 } from "@/components/ui/card";
 import { Link } from "react-router-dom";
 import api from "@/utils/axiosInstance";
-import { TaskItem } from "./taskitem";
+import { LogoutOverlay } from "@/components/LogoutOverlay";
+import { CreateTaskOverlay } from "../createtaskoverlay";
 
 export default function Dashboard() {
+  const [showLogout, setShowLogout] = useState(false);
+  const [showCreate, setShowCreate] = useState(false);
+
+  const [title, setTitle] = useState("");
+  const [description, setDescription] = useState("");
+  const [emergency, setEmergency] = useState(false);
+  const [date, setDate] = useState("");
+  const [taskError, setTaskError] = useState(null);
 
   // Login state
   const [login, setLogin] = useState(() => {
@@ -26,32 +37,6 @@ export default function Dashboard() {
   const [todos, setTodos] = useState([]);
   const [error, setError] = useState(null);
 
-  const notLoggedTask = [
-    {
-      title: "Login sir",
-      desc: "login button is on upper right.",
-      due: "Login Right away",
-      priority: "High",
-    },
-  ];
-
-  const notLoggedImportantTasks = [
-    {
-      title: "Gotta Login Sir/Mam",
-      desc: "The login button is on upper right.",
-      due: "Login right now",
-      priority: "Urgent",
-    },
-  ];
-
-  // Logout
-  const removeToken = () => {
-    localStorage.removeItem("token");
-    setLogin(false);
-    console.log("Removed successfully");
-  };
-
-  // <------------------------- FIXED ------------------------->
   // Prevent API from calling when user is NOT logged in
   useEffect(() => {
     if (!login) return;
@@ -63,8 +48,10 @@ export default function Dashboard() {
         setError(null);
       } catch (err) {
         console.error("Error fetching todos", err);
-        // Prefer server message when available
-        const msg = err?.response?.data?.message || err.message || "Failed to fetch todos";
+        const msg =
+          err?.response?.data?.message ||
+          err.message ||
+          "Failed to fetch todos";
         setError(msg);
       }
     };
@@ -72,138 +59,113 @@ export default function Dashboard() {
     fetchTodos();
   }, [login]);
 
+  // Create Task Submit
+  const onSubmitCreateTask = async () => {
+    if (!title.trim()) {
+      setTaskError("Please provide title");
+      return;
+    }
+
+    try {
+      await api.post("/todo/post", {
+        title,
+        description,
+        emergency,
+        dueDate: date || undefined,
+      });
+
+      // Reset fields
+      setTitle("");
+      setDescription("");
+      setEmergency(false);
+      setDate("");
+      setTaskError(null);
+
+      setShowCreate(false);
+      window.location.reload(); // refresh tasks
+    } catch (err) {
+      const msg =
+        err?.response?.data?.message || err.message || "Failed to create task";
+      setTaskError(msg);
+    }
+  };
+
   return (
-    <div className="min-h-screen bg-gray-50 p-6">
+    <div className="relative min-h-screen bg-gray-50 p-6">
 
-      {/* HEADER */}
-      <header className="max-w-7xl mx-auto flex items-center justify-between py-4">
-        <div className="flex items-center gap-3">
-          <div className="text-2xl font-bold">TaskManager</div>
-          <div className="text-sm text-gray-500">Your personal todo dashboard</div>
-        </div>
+      {/* Blur dashboard when modals open */}
+      <div className={showLogout || showCreate ? "blur-sm pointer-events-none" : ""}>
 
-        <div className="flex items-center gap-3">
-          <div className="text-sm text-gray-600">
-            {login ? "Logged in" : "Log in"}
+        {/* HEADER */}
+        <Header login={login} onLogout={() => setShowLogout(true)} />
+
+        {error && (
+          <div className="max-w-7xl mx-auto mt-4 text-red-600 bg-red-50 border border-red-200 p-3 rounded">
+            <strong>Error:</strong> {error}
           </div>
+        )}
 
-          {!login && (
-            <Button size="sm" variant="ghost">
-              <Link to="/login">Login</Link>
-            </Button>
-          )}
+        {/* MAIN BODY */}
+        <main className="max-w-7xl mx-auto mt-6 grid grid-cols-1 lg:grid-cols-4 gap-6">
 
-          {login && (
-            <Button size="sm" variant="ghost" onClick={removeToken}>
-              Logout
-            </Button>
-          )}
-        </div>
-      </header>
+          {/* LEFT SIDE */}
+          <section className="lg:col-span-3 space-y-6">
 
-      {error && (
-        <div className="max-w-7xl mx-auto mt-4 text-red-600 bg-red-50 border border-red-200 p-3 rounded">
-          <strong>Error:</strong> {error}
-        </div>
+            <Stats todos={todos} />
+
+            <TaskList login={login} todos={todos} />
+          </section>
+
+          {/* RIGHT SIDE */}
+          <aside className="space-y-6">
+            <Card>
+              <CardHeader>
+                <CardTitle>Quick Actions</CardTitle>
+              </CardHeader>
+
+              <CardContent>
+                <div className="flex flex-col gap-2">
+                  <Button onClick={() => setShowCreate(true)}>
+                    Create Task
+                  </Button>
+                  <Button variant="outline">View Calendar</Button>
+                  <Button variant="ghost">Settings</Button>
+                </div>
+              </CardContent>
+            </Card>
+          </aside>
+        </main>
+      </div>
+
+      {/* Logout Overlay */}
+      {showLogout && (
+        <LogoutOverlay
+          onCancel={() => setShowLogout(false)}
+          onConfirm={() => {
+            localStorage.removeItem("token");
+            setLogin(false);
+            setShowLogout(false);
+          }}
+        />
       )}
 
-      {/* MAIN BODY */}
-      <main className="max-w-7xl mx-auto mt-6 grid grid-cols-1 lg:grid-cols-4 gap-6">
+      {/* CreateTask Overlay */}
+      {showCreate && (
+        <CreateTaskOverlay
+          title={title}
+          description={description}
+          emergency={emergency}
+          date={date}
+          error={taskError}
+          setTitle={setTitle}
+          setDescription={setDescription}
+          setEmergency={setEmergency}
+          setDate={setDate}
+          onSubmit={onSubmitCreateTask}
+          onCancel={() => setShowCreate(false)}
+        />
+      )}
 
-        {/* LEFT SIDE */}
-        <section className="lg:col-span-3 space-y-6">
-
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-
-            {/* <------------------------- FIXED -------------------------> */}
-            <StatCard title="Total Tasks" value={todos.length} />
-
-            <StatCard title="Completed" value={todos.filter(t => t.completed).length} />
-
-            <StatCard title="Important" value={todos.filter(t => t.emergency).length} />
-          </div>
-
-          <Card>
-            <CardHeader>
-              <CardTitle>Tasks</CardTitle>
-              <CardDescription>All your tasks are listed below.</CardDescription>
-            </CardHeader>
-
-            <CardContent>
-              <div className="space-y-3">
-
-                {!login &&
-                  notLoggedTask.map((t) => (
-                    <TaskItem
-                      key={t._id}
-                      title={t.title}
-                      desc={t.desc}
-                      due={t.due}
-                      priority={t.priority}
-                    />
-                  ))}
-
-                {login &&
-                  (Array.isArray(todos) ? todos : []).map((t) => (
-                    <TaskItem
-                      key={t._id}
-                      title={t.title}
-                      desc={t.description}
-                      due={t.dueDate || "No due date"}
-                      priority={t.emergency ? "Urgent" : "Normal"}
-                    />
-                  ))}
-              </div>
-            </CardContent>
-          </Card>
-        </section>
-
-        {/* RIGHT SIDE */}
-        <aside className="space-y-6">
-
-          <Card>
-            <CardHeader>
-              <CardTitle>Important Tasks</CardTitle>
-              <CardDescription>Quick access to high-priority items.</CardDescription>
-            </CardHeader>
-
-            <CardContent>
-              <div className="space-y-3">
-
-                {/* Show only when NOT logged in */}
-                {!login &&
-                  notLoggedImportantTasks.map((t, i) => (
-                    <div key={i} className="bg-white p-3 rounded-lg shadow-sm">
-                      <div className="flex items-center justify-between">
-                        <div className="font-medium">{t.title}</div>
-                        <div className="text-xs text-red-600">{t.priority}</div>
-                      </div>
-                      <div className="text-sm text-gray-600 mt-1">{t.desc}</div>
-                      <div className="text-xs text-gray-400 mt-2">Due: {t.due}</div>
-                    </div>
-                  ))}
-
-                {/* When logged in, we will add logic later */}
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <CardTitle>Quick Actions</CardTitle>
-            </CardHeader>
-
-            <CardContent>
-              <div className="flex flex-col gap-2">
-                <Button><Link to="/createtask">Create Task</Link></Button>
-                <Button variant="outline">View Calendar</Button>
-                <Button variant="ghost">Settings</Button>
-              </div>
-            </CardContent>
-          </Card>
-
-        </aside>
-      </main>
     </div>
   );
 }

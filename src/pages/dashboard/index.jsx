@@ -1,4 +1,4 @@
 import Dashboard from "./dashboard";
 export default Dashboard;
-export { TaskItem } from "./taskitem";
-export { StatCard } from "./startcard";
+export { TaskItem } from "./components/TaskItem";
+export { StatCard } from "./components/StatCard";
