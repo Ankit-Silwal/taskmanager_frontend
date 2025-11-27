@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import Header from "./components/Header";
 import Stats from "./components/Stats";
 import TaskList from "./components/TaskList";
+import { EditTaskOverlay } from "@/components/EditTaskOverlay";
 import {
   Card,
   CardContent,
@@ -14,10 +15,12 @@ import { Link } from "react-router-dom";
 import api from "@/utils/axiosInstance";
 import { LogoutOverlay } from "@/components/LogoutOverlay";
 import { CreateTaskOverlay } from "../createtaskoverlay";
+import { Edit } from "lucide-react";
 
 export default function Dashboard() {
   const [showLogout, setShowLogout] = useState(false);
   const [showCreate, setShowCreate] = useState(false);
+  const [showEdit,setShowEdit]=useState(false)
 
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
@@ -38,6 +41,9 @@ export default function Dashboard() {
   const [error, setError] = useState(null);
 
   // Prevent API from calling when user is NOT logged in
+  const [editingId, setEditingId] = useState(null);
+  const [editError, setEditError] = useState(null);
+
   useEffect(() => {
     if (!login) return;
 
@@ -65,7 +71,6 @@ export default function Dashboard() {
       setTaskError("Please provide title");
       return;
     }
-
     try {
       await api.post("/todo/post", {
         title,
@@ -90,11 +95,60 @@ export default function Dashboard() {
     }
   };
 
+  // Edit handlers (top-level)
+  const openEdit = (task) => {
+    if (!task) return;
+    setEditingId(task._id || null);
+    setTitle(task.title || "");
+    setDescription(task.description || "");
+    setEmergency(!!task.emergency);
+    setDate(task.dueDate || "");
+    setEditError(null);
+    setShowEdit(true);
+  };
+
+  const onSubmitEdit = async () => {
+    if (!title.trim()) {
+      setEditError("Please provide title");
+      return;
+    }
+
+    try {
+      await api.post("/todo/update", {
+        _id: editingId,
+        title,
+        description,
+        emergency,
+        dueDate: date || undefined,
+      });
+      setShowEdit(false);
+      setEditingId(null);
+      setEditError(null);
+      // refresh todos
+      const res = await api.get("/todo/getall");
+      setTodos(res.data.todos || []);
+    } catch (err) {
+      const msg = err?.response?.data?.message || err.message || "Failed to update task";
+      setEditError(msg);
+    }
+  };
+
+  const onDone = async (task) => {
+    if (!task?._id) return;
+    try {
+      await api.post("/todo/update", { _id: task._id, completed: true });
+      const res = await api.get("/todo/getall");
+      setTodos(res.data.todos || []);
+    } catch (err) {
+      console.error("Failed to mark done", err);
+    }
+  };
+
   return (
     <div className="relative min-h-screen bg-gray-50 p-6">
 
       {/* Blur dashboard when modals open */}
-      <div className={showLogout || showCreate ? "blur-sm pointer-events-none" : ""}>
+      <div className={showLogout || showCreate || showEdit ? "blur-sm pointer-events-none" : ""}>
 
         {/* HEADER */}
         <Header login={login} onLogout={() => setShowLogout(true)} />
@@ -113,7 +167,7 @@ export default function Dashboard() {
 
             <Stats todos={todos} />
 
-            <TaskList login={login} todos={todos} />
+            <TaskList login={login} todos={todos} onEdit={openEdit} onDone={onDone} />
           </section>
 
           {/* RIGHT SIDE */}
@@ -136,6 +190,21 @@ export default function Dashboard() {
           </aside>
         </main>
       </div>
+      {showEdit && (
+        <EditTaskOverlay
+          title={title}
+          description={description}
+          emergency={emergency}
+          date={date}
+          error={editError}
+          setTitle={setTitle}
+          setDescription={setDescription}
+          setEmergency={setEmergency}
+          setDate={setDate}
+          onSubmit={onSubmitEdit}
+          onCancel={() => setShowEdit(false)}
+        />
+      )}
 
       {/* Logout Overlay */}
       {showLogout && (

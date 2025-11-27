@@ -8,7 +8,7 @@ import {
 } from "@/components/ui/card";
 import { TaskItem } from "./TaskItem";
 
-export default function TaskList({ login, todos = [] }) {
+export default function TaskList({ login, todos = [], onEdit, onDone }) {
   const notLoggedTask = [
     {
       title: "Login sir",
@@ -29,17 +29,29 @@ export default function TaskList({ login, todos = [] }) {
         <div className="space-y-3">
           {!login &&
             notLoggedTask.map((t) => (
-              <TaskItem key={t._id || t.title} title={t.title} desc={t.desc} due={t.due} priority={t.priority} />
+              <TaskItem
+                key={t._id || t.title}
+                task={t}
+                title={t.title}
+                desc={t.desc}
+                due={t.due}
+                priority={t.priority}
+                onEdit={onEdit}
+                onDone={onDone}
+              />
             ))}
 
           {login &&
             (Array.isArray(todos) ? todos : []).map((t) => (
               <TaskItem
                 key={t._id}
+                task={t}
                 title={t.title}
-                desc={t.description}
+                desc={t.description || "No description"}
                 due={t.dueDate || "No due date"}
                 priority={t.emergency ? "Urgent" : "Normal"}
+                onEdit={onEdit}
+                onDone={onDone}
               />
             ))}
         </div>
