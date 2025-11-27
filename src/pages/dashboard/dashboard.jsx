@@ -95,7 +95,7 @@ export default function Dashboard() {
     }
   };
 
-  // Edit handlers (top-level)
+  
   const openEdit = (task) => {
     if (!task) return;
     setEditingId(task._id || null);
@@ -114,8 +114,8 @@ export default function Dashboard() {
     }
 
     try {
-      await api.post("/todo/update", {
-        _id: editingId,
+      
+      await api.put(`/todo/put/${editingId}`, {
         title,
         description,
         emergency,
@@ -133,16 +133,7 @@ export default function Dashboard() {
     }
   };
 
-  const onDone = async (task) => {
-    if (!task?._id) return;
-    try {
-      await api.post("/todo/update", { _id: task._id, completed: true });
-      const res = await api.get("/todo/getall");
-      setTodos(res.data.todos || []);
-    } catch (err) {
-      console.error("Failed to mark done", err);
-    }
-  };
+  
 
   return (
     <div className="relative min-h-screen bg-gray-50 p-6">
@@ -167,7 +158,39 @@ export default function Dashboard() {
 
             <Stats todos={todos} />
 
-            <TaskList login={login} todos={todos} onEdit={openEdit} onDone={onDone} />
+            <TaskList login={login} todos={todos} onEdit={openEdit} onDelete={async (task) => {
+              
+              if (!task?._id) return;
+              try {
+                // try conventional delete path first
+                await api.delete(`/todo/delete/${task._id}`);
+              } catch (err) {
+                // if 404 try alternative
+                if (err?.response?.status === 404) {
+                  try {
+                    await api.delete(`/todo/${task._id}`);
+                    } catch (error_) {
+                      console.error("Delete failed (alt)", error_);
+                    return;
+                      }
+                } else {
+                  console.error("Delete failed", err);
+                  return;
+                }
+              }
+              const res = await api.get("/todo/getall");
+              setTodos(res.data.todos || []);
+            }} onToggleCompleted={async (task) => {
+              if (!task?._id) return;
+              try {
+                
+                await api.put(`/todo/put/${task._id}`, { completed: !task.completed });
+                const res = await api.get("/todo/getall");
+                setTodos(res.data.todos || []);
+              } catch (err) {
+                console.error("Toggle completed failed", err);
+              }
+            }} />
           </section>
 
           {/* RIGHT SIDE */}
@@ -177,15 +200,12 @@ export default function Dashboard() {
                 <CardTitle>Quick Actions</CardTitle>
               </CardHeader>
 
-              <CardContent>
-                <div className="flex flex-col gap-2">
-                  <Button onClick={() => setShowCreate(true)}>
-                    Create Task
-                  </Button>
-                  <Button variant="outline">View Calendar</Button>
-                  <Button variant="ghost">Settings</Button>
-                </div>
-              </CardContent>
+                <CardContent>
+                  <div className="flex flex-col gap-2">
+                    <Button onClick={() => setShowCreate(true)}>Create Task</Button>
+                    <Button variant="ghost">Settings</Button>
+                  </div>
+                </CardContent>
             </Card>
           </aside>
         </main>

@@ -8,7 +8,7 @@ import {
 } from "@/components/ui/card";
 import { TaskItem } from "./TaskItem";
 
-export default function TaskList({ login, todos = [], onEdit, onDone }) {
+export default function TaskList({ login, todos = [], onEdit, onDelete, onToggleCompleted }) {
   const notLoggedTask = [
     {
       title: "Login sir",
@@ -51,7 +51,8 @@ export default function TaskList({ login, todos = [], onEdit, onDone }) {
                 due={t.dueDate || "No due date"}
                 priority={t.emergency ? "Urgent" : "Normal"}
                 onEdit={onEdit}
-                onDone={onDone}
+                onDelete={onDelete}
+                onToggleCompleted={onToggleCompleted}
               />
             ))}
         </div>
